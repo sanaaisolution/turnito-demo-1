@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TURNITO – Gestión de Recursos Humanos</title>
+  <meta name="description" content="TURNITO: Dashboard profesional de gestión de recursos humanos. Fichajes, turnos, vacaciones, nóminas y más.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* Extra inline tweaks */
+    .login-demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+    .demo-pill {
+      padding: 8px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+      font-size: 12px;
+    }
+    .demo-pill:hover { border-color: var(--border-hover); background: var(--bg-card-hover); }
+    .demo-pill strong { display: block; font-size: 13px; margin-bottom: 2px; }
+    #rrhh-sidenav { width: 220px; background: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 16px 0; flex-shrink: 0; }
+    #rrhh-sidenav .nav-item { border-left: none; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding-left: 24px; }
+    #rrhh-sidenav .nav-item.active { background: var(--accent-blue-dim); color: var(--accent-blue); border-right: 3px solid var(--accent-blue); }
+    .rrhh-layout { display: flex; flex: 1; min-height: 0; }
+    .rrhh-main { flex: 1; padding: 28px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">T</div>
+      <h1>TURNITO</h1>
+      <p>Sistema de Gestión de Recursos Humanos</p>
+    </div>
+
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Email corporativo</label>
+        <input type="email" id="login-email" class="form-control" placeholder="nombre@empresa.es" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+      </div>
+      <div id="login-error" style="color:var(--error);font-size:13px;margin-bottom:12px;display:none;"></div>
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="login-btn">Iniciar sesión</button>
+    </form>
+
+    <div style="border-top:1px solid var(--border);margin-top:24px;padding-top:18px;">
+      <div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:10px;">Acceso demo rápido — Haz clic para autocompletar</div>
+      <div class="login-demo-grid">
+        <div class="demo-pill" onclick="autoLogin('empleado@turnito.es','demo123')" style="border-left:3px solid var(--accent-green);">
+          <strong style="color:var(--accent-green);">Empleado/a</strong>
+          María García
+        </div>
+        <div class="demo-pill" onclick="autoLogin('supervisora@turnito.es','demo123')" style="border-left:3px solid var(--accent-purple);">
+          <strong style="color:var(--accent-purple);">Supervisora</strong>
+          Elena Morales
+        </div>
+        <div class="demo-pill" onclick="autoLogin('rrhh@turnito.es','demo123')" style="border-left:3px solid var(--accent-blue);">
+          <strong style="color:var(--accent-blue);">RRHH / Admin</strong>
+          Cristina López
+        </div>
+        <div class="demo-pill" onclick="autoLogin('ceo@turnito.es','demo123')" style="border-left:3px solid var(--accent-amber);">
+          <strong style="color:var(--accent-amber);">CEO</strong>
+          Alejandro Ruiz
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="main-app" class="app-wrapper" style="display:none;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">T</div>
+      <div class="logo-text">TURN<span>ITO</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <!-- populated by JS -->
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" id="sidebar-user-btn" onclick="toggleDropdown('user-dropdown')">
+        <div class="user-avatar" id="sidebar-avatar" style="background:var(--accent-green);">MG</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">María García</div>
+          <div class="user-role" id="sidebar-role">empleado</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-secondary);flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="dropdown">
+        <div class="dropdown-menu" id="user-dropdown" style="bottom:60px;top:auto;">
+          <button class="dropdown-item" onclick="openModal('modal-perfil')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Mi perfil
+          </button>
+          <button class="dropdown-item" onclick="openModal('modal-config')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+            Configuración
+          </button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item danger" onclick="handleLogout()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-title">
+        <h1 id="page-title">Dashboard</h1>
+        <p id="page-subtitle">Bienvenido/a a TURNITO</p>
+      </div>
+      <div class="header-actions">
+        <div id="header-status-badge"></div>
+        <button class="btn-icon" id="notif-btn" onclick="toggleDropdown('notif-dropdown')" title="Notificaciones">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="notif-badge" id="notif-count">3</span>
+        </button>
+        <div class="dropdown">
+          <div class="dropdown-menu" id="notif-dropdown" style="width:320px;">
+            <div style="padding:10px 12px;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);">Notificaciones</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" style="flex-direction:column;align-items:flex-start;gap:2px;">
+              <span style="font-size:13px;font-weight:600;">Turno aprobado ✅</span>
+              <span style="font-size:12px;color:var(--text-secondary);">Tu solicitud de vacaciones ha sido revisada</span>
+            </div>
+            <div class="dropdown-item" style="flex-direction:column;align-items:flex-start;gap:2px;">
+              <span style="font-size:13px;font-weight:600;">Nuevo mensaje de RRHH</span>
+              <span style="font-size:12px;color:var(--text-secondary);">Recordatorio: entrega documentación</span>
+            </div>
+            <div class="dropdown-item" style="flex-direction:column;align-items:flex-start;gap:2px;">
+              <span style="font-size:13px;font-weight:600;">Nómina disponible 📄</span>
+              <span style="font-size:12px;color:var(--text-secondary);">Tu nómina de Febrero está lista</span>
+            </div>
+          </div>
+        </div>
+        <div class="user-avatar" id="header-avatar" style="background:var(--accent-green);cursor:pointer;" onclick="openModal('modal-perfil')">MG</div>
+      </div>
+    </header>
+
+    <!-- VIEWS CONTAINER -->
+    <div id="views-container" style="flex:1;">
+
+      <!-- EMPLEADO VIEW -->
+      <div class="view" id="view-dashboard">
+        <div class="page-content" id="empleado-content"></div>
+      </div>
+
+      <!-- SUPERVISORA VIEW -->
+      <div class="view" id="view-supervisora">
+        <div class="page-content" id="supervisora-content"></div>
+      </div>
+
+      <!-- RRHH VIEW -->
+      <div class="view" id="view-rrhh" style="flex-direction:row;">
+        <nav id="rrhh-sidenav">
+          <div class="nav-section-label">Gestión</div>
+          <div class="nav-item active" onclick="loadRRHHSubview('empleados');setRRHHActive(this);" data-sub="empleados">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            Empleados
+          </div>
+          <div class="nav-item" onclick="loadRRHHSubview('turnos');setRRHHActive(this);" data-sub="turnos">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Turnos y Horarios
+          </div>
+          <div class="nav-item" onclick="loadRRHHSubview('nominas');setRRHHActive(this);" data-sub="nominas">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            Nóminas <span class="nav-badge">3</span>
+          </div>
+          <div class="nav-section-label">Estructura</div>
+          <div class="nav-item" onclick="loadRRHHSubview('centros');setRRHHActive(this);" data-sub="centros">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16"/></svg>
+            Centros/Sedes
+          </div>
+          <div class="nav-item" onclick="loadRRHHSubview('configuracion');setRRHHActive(this);" data-sub="configuracion">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+            Configuración
+          </div>
+        </nav>
+        <div class="rrhh-main" id="rrhh-content"></div>
+      </div>
+
+      <!-- CEO VIEW -->
+      <div class="view" id="view-ceo">
+        <div class="page-content" id="ceo-content"></div>
+      </div>
+
+    </div><!-- /views-container -->
+  </main>
+
+  <!-- CHAT WIDGET -->
+  <div class="chat-widget">
+    <div class="chat-toggle" onclick="toggleChat()" title="Chat Turnito">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span class="chat-notif" id="chat-notif-badge">1</span>
+    </div>
+    <div class="chat-panel" id="chat-panel">
+      <div class="chat-panel-header">
+        <div class="chat-bot-avatar">T</div>
+        <div>
+          <div class="bot-name">Turnito IA</div>
+          <div class="bot-status">En línea · Asistente RRHH</div>
+        </div>
+        <button class="btn-icon" onclick="toggleChat()" style="margin-left:auto;width:28px;height:28px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="quick-actions" id="quick-actions">
+        <button class="quick-action-btn" onclick="sendQuickAction('¿Cuántos días de vacaciones me quedan?')">🏖️ Vacaciones</button>
+        <button class="quick-action-btn" onclick="sendQuickAction('¿Cuál es mi turno mañana?')">📅 Mi turno</button>
+        <button class="quick-action-btn" onclick="sendQuickAction('Quiero reportar una ausencia')">❌ Ausencia</button>
+        <button class="quick-action-btn" onclick="sendQuickAction('¿Cuándo cobra mi nómina?')">💰 Nómina</button>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" id="chat-input" class="chat-input" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')sendChatMessage()">
+        <button class="chat-send-btn" onclick="sendChatMessage()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-app -->
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Modal: Solicitar Vacaciones -->
+<div class="modal-overlay" id="modal-vacaciones">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🏖️ Solicitar vacaciones</div>
+      <button class="modal-close" onclick="closeModal('modal-vacaciones')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert-banner info mb-4">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div class="alert-text"><strong>Días disponibles: 22 días laborables</strong><span>La solicitud quedará pendiente de aprobación por tu supervisora</span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de inicio</label>
+        <input type="date" class="form-control" id="vac-inicio" min="2026-03-16">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de fin</label>
+        <input type="date" class="form-control" id="vac-fin" min="2026-03-16">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Motivo / Nota adicional (opcional)</label>
+        <textarea class="form-control" rows="3" placeholder="Ej. Vacaciones de Semana Santa..."></textarea>
+      </div>
+      <div id="vac-days-calc" class="text-sm text-muted mb-2 text-center"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-vacaciones')">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitVacaciones()">Enviar solicitud</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Reportar Ausencia -->
+<div class="modal-overlay" id="modal-ausencia">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📋 Reportar ausencia / permiso</div>
+      <button class="modal-close" onclick="closeModal('modal-ausencia')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-control" id="ausencia-tipo">
+          <option value="ausencia">Ausencia</option>
+          <option value="permiso">Permiso personal</option>
+          <option value="medico">Cita médica</option>
+          <option value="maternidad">Maternidad/Paternidad</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input type="date" class="form-control" id="ausencia-fecha">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Motivo (obligatorio)</label>
+        <textarea class="form-control" id="ausencia-motivo" rows="3" placeholder="Describe brevemente el motivo..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">¿Aportarás justificante?</label>
+        <select class="form-control">
+          <option>Sí, lo subiré próximamente</option>
+          <option>No aplica</option>
+          <option>Ya lo tengo disponible</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ausencia')">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitAusencia()">Confirmar y enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ficha Empleado (RRHH) -->
+<div class="modal-overlay" id="modal-ficha-empleado">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div class="modal-title">👤 Ficha completa — Sanae Gutiérrez</div>
+      <button class="modal-close" onclick="closeModal('modal-ficha-empleado')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs" style="flex-wrap:wrap;">
+        <button class="tab-btn active" onclick="switchFichaTab('datos',this)">Datos personales</button>
+        <button class="tab-btn" onclick="switchFichaTab('laboral',this)">Laboral</button>
+        <button class="tab-btn" onclick="switchFichaTab('contrato',this)">Contrato</button>
+        <button class="tab-btn" onclick="switchFichaTab('documentos',this)">Documentos</button>
+        <button class="tab-btn" onclick="switchFichaTab('rendimiento',this)">Rendimiento</button>
+      </div>
+      <div id="ficha-tab-datos" class="tab-panel active">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-control" value="Sanae Gutiérrez Morales"></div>
+          <div class="form-group"><label class="form-label">DNI/NIE</label><input class="form-control" value="12345678A"></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-control" value="sanae.gutierrez@empresa.es"></div>
+          <div class="form-group"><label class="form-label">Teléfono</label><input class="form-control" value="+34 612 345 678"></div>
+          <div class="form-group" style="grid-column:span 2;"><label class="form-label">Dirección</label><input class="form-control" value="Calle Ejemplo 42, 3ºB, 28001 Madrid"></div>
+        </div>
+      </div>
+      <div id="ficha-tab-laboral" class="tab-panel">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">Puesto</label><input class="form-control" value="Agente de Atención"></div>
+          <div class="form-group"><label class="form-label">Centro</label><select class="form-control"><option selected>Sede Central</option></select></div>
+          <div class="form-group"><label class="form-label">Fecha de alta</label><input type="date" class="form-control" value="2022-06-01"></div>
+          <div class="form-group"><label class="form-label">Antigüedad</label><input class="form-control" value="3 años 9 meses" readonly></div>
+          <div class="form-group"><label class="form-label">Estado</label><select class="form-control"><option selected>Activo</option><option>Baja</option><option>Vacaciones</option></select></div>
+        </div>
+      </div>
+      <div id="ficha-tab-contrato" class="tab-panel">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">Tipo de contrato</label><select class="form-control"><option selected>Indefinido</option></select></div>
+          <div class="form-group"><label class="form-label">Jornada semanal (h)</label><input type="number" class="form-control" value="40"></div>
+          <div class="form-group"><label class="form-label">Salario base (€/mes)</label><input class="form-control" value="1.950,00"></div>
+          <div class="form-group"><label class="form-label">IBAN</label><input class="form-control" value="ES12 3456 7890 1234 5678 9012"></div>
+          <div class="form-group"><label class="form-label">Convenio aplicable</label><input class="form-control" value="Convenio Comercio 2024-2026"></div>
+        </div>
+      </div>
+      <div id="ficha-tab-documentos" class="tab-panel">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${['Contrato indefinido - Jun 2022','DNI escaneado - Jun 2022','Nómina Feb 2026','Justificante médico - Mar 2026'].map(d=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);">
+              <span>📄</span>
+              <span class="text-sm" style="flex:1;">${d}</span>
+              <button class="btn btn-sm btn-secondary">Ver</button>
+              <button class="btn btn-sm btn-ghost">↓</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div id="ficha-tab-rendimiento" class="tab-panel">
+        <div class="alert-banner info mb-4"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div class="alert-text"><strong>Acceso restringido</strong><span>Solo visible para RRHH y Dirección</span></div></div>
+        <div class="form-group"><label class="form-label">Evaluación anual 2025</label><select class="form-control"><option>Excelente (5/5)</option><option>Muy bien (4/5)</option><option selected>Bien (3/5)</option></select></div>
+        <div class="form-group"><label class="form-label">Notas de rendimiento</label><textarea class="form-control" rows="5" placeholder="Observaciones confidenciales del responsable RRHH...">Empleada proactiva, buen trabajo en equipo. Pendiente de formación en nuevas herramientas CRM.</textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ficha-empleado')">Cerrar</button>
+      <button class="btn btn-primary" onclick="showToast('Cambios guardados correctamente','success');closeModal('modal-ficha-empleado')">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nuevo Empleado -->
+<div class="modal-overlay" id="modal-nuevo-empleado">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">➕ Nuevo empleado</div>
+      <button class="modal-close" onclick="closeModal('modal-nuevo-empleado')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Nombre completo *</label><input class="form-control" placeholder="Nombre y apellidos"></div>
+        <div class="form-group"><label class="form-label">Email corporativo *</label><input type="email" class="form-control" placeholder="nombre@empresa.es"></div>
+        <div class="form-group"><label class="form-label">DNI/NIE *</label><input class="form-control" placeholder="12345678A"></div>
+        <div class="form-group"><label class="form-label">Teléfono</label><input class="form-control" placeholder="+34 600 000 000"></div>
+        <div class="form-group"><label class="form-label">Puesto *</label><input class="form-control" placeholder="Ej. Agente Comercial"></div>
+        <div class="form-group"><label class="form-label">Centro *</label><select class="form-control">${DEMO_DATA.centros.map(c=>`<option>${c.nombre}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Tipo de contrato *</label><select class="form-control"><option>Indefinido</option><option>Temporal</option><option>Prácticas</option><option>Autónomo</option></select></div>
+        <div class="form-group"><label class="form-label">Fecha de alta *</label><input type="date" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Salario base (€/mes)</label><input type="number" class="form-control" placeholder="1800"></div>
+        <div class="form-group"><label class="form-label">Jornada semanal (h)</label><input type="number" class="form-control" value="40"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-nuevo-empleado')">Cancelar</button>
+      <button class="btn btn-primary" onclick="showToast('Empleado creado. Se ha enviado email de bienvenida.','success');closeModal('modal-nuevo-empleado')">Crear empleado</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Perfil Empleado (Supervisora) -->
+<div class="modal-overlay" id="modal-perfil-empleado">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 Perfil — Sanae Gutiérrez</div>
+      <button class="modal-close" onclick="closeModal('modal-perfil-empleado')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--accent-green);display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#0a0e14;font-family:'Syne',sans-serif;margin-bottom:10px;">SG</div>
+        <div style="font-weight:700;font-size:18px;">Sanae Gutiérrez</div>
+        <div class="text-muted text-sm">Agente de Atención · Sede Central</div>
+        <span class="pill pill-green mt-2">🟢 Trabajando</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-sm);" class="flex justify-between"><span class="text-muted text-sm">Turno hoy</span><span class="text-sm font-bold">09:00 – 17:00</span></div>
+        <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-sm);" class="flex justify-between"><span class="text-muted text-sm">Fichaje entrada</span><span style="color:var(--accent-green);" class="text-sm font-bold">08:55</span></div>
+        <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-sm);" class="flex justify-between"><span class="text-muted text-sm">Horas esta semana</span><span class="text-sm font-bold">38h / 40h</span></div>
+        <div style="background:var(--bg-input);padding:12px;border-radius:var(--radius-sm);" class="flex justify-between"><span class="text-muted text-sm">Vacaciones disponibles</span><span class="text-sm font-bold">22 días</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-perfil-empleado')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Mi Perfil -->
+<div class="modal-overlay" id="modal-perfil">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Mi perfil</div>
+      <button class="modal-close" onclick="closeModal('modal-perfil')">✕</button>
+    </div>
+    <div class="modal-body" id="perfil-modal-content">
+      <!-- populated by JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-perfil')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="js/api/client.js"></script>
+<script src="js/app.js"></script>
+<script src="js/views/empleado.js"></script>
+<script src="js/views/supervisora.js"></script>
+<script src="js/views/rrhh.js"></script>
+<script src="js/views/ceo.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>
